@@ -4,7 +4,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/ThreeDotsLabs/meteors/assets"
+	"spaceWarrior/assets"
+
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -20,8 +21,6 @@ var shootCooldown = time.Millisecond * 400
 type Player struct {
 	game *Game
 
-	name     string
-	score    int
 	position Vector
 	rotation float64
 	forward  float64

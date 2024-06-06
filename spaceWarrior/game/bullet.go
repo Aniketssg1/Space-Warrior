@@ -3,12 +3,14 @@ package game
 import (
 	"math"
 	"spaceWarrior/assets"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
-	bulletSpeedPerSecond = 350.0
+	bulletSpeedPerSecond = 300.0
+	fireDisplayDuration  = 200 * time.Millisecond // Display fire for 200ms
 )
 
 type Bullet struct {
@@ -18,9 +20,11 @@ type Bullet struct {
 }
 
 type Fire struct {
-	position Vector
-	rotation float64
-	sprite   *ebiten.Image
+	position  Vector
+	rotation  float64
+	sprite    *ebiten.Image
+	timer     *Timer
+	isVisible bool
 }
 
 func NewFire(pos Vector, rotation float64) *Fire {
@@ -34,9 +38,11 @@ func NewFire(pos Vector, rotation float64) *Fire {
 	pos.Y -= halfH
 
 	f := &Fire{
-		position: pos,
-		rotation: rotation,
-		sprite:   sprite,
+		position:  pos,
+		rotation:  rotation,
+		sprite:    sprite,
+		timer:     NewTimer(fireDisplayDuration),
+		isVisible: true,
 	}
 
 	return f
@@ -58,6 +64,9 @@ func NewBullet(pos Vector, rotation float64) *Bullet {
 		sprite:   sprite,
 	}
 
+	// Play gunshot sound
+	assets.GunShot.Rewind()
+	assets.GunShot.Play()
 	return b
 }
 
@@ -76,19 +85,23 @@ func (b *Bullet) Draw(screen *ebiten.Image) {
 	screen.DrawImage(b.sprite, op)
 }
 
-func (b *Fire) Draw(screen *ebiten.Image) {
-	bounds := b.sprite.Bounds()
+func (f *Fire) Draw(screen *ebiten.Image) {
+	if !f.isVisible {
+		return
+	}
+
+	bounds := f.sprite.Bounds()
 	halfW := float64(bounds.Dx()) / 2
 	halfH := float64(bounds.Dy()) / 2
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(-halfW, -halfH)
-	op.GeoM.Rotate(b.rotation)
+	op.GeoM.Rotate(f.rotation)
 	op.GeoM.Translate(halfW, halfH)
 
-	op.GeoM.Translate(b.position.X, b.position.Y)
+	op.GeoM.Translate(f.position.X, f.position.Y)
 
-	screen.DrawImage(b.sprite, op)
+	screen.DrawImage(f.sprite, op)
 }
 
 func (b *Bullet) Update() {
@@ -98,8 +111,10 @@ func (b *Bullet) Update() {
 }
 
 func (f *Fire) Update() {
-	f.position.X += math.Sin(f.rotation) * 2
-	f.position.Y += math.Cos(f.rotation) * -2
+	f.timer.Update()
+	if f.timer.IsReady() {
+		f.isVisible = false
+	}
 }
 
 func (b *Bullet) Collider() Rect {
