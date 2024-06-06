@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	bulletSpeedPerSecond = 300.0
+	bulletSpeedPerSecond = 300.0                  // Speed is 300 pixels per second
 	fireDisplayDuration  = 200 * time.Millisecond // Display fire for 200ms
 )
 
